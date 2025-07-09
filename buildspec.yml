@@ -30,4 +30,4 @@ phases:
       - echo 'Build process completed successfully'
 cache:
   paths:
-    - /root/.docker/**/* 
+    - /root/.docker/**/*
