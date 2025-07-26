@@ -1,0 +1,23 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Project Configuration
+project_name = "rails-app"
+environment  = "production"
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
+
+# Database Configuration
+db_name     = "rails_production"
+db_username = "postgres"
+db_password = "RailsApp2024!"
+db_instance_class = "db.t3.micro"
+
+# GitHub Configuration
+github_repository = "sakth1x02/DevOps-Interview-ROR-App"
+github_branch     = "main"
+codestar_connection_arn = "arn:aws:codestar-connections:us-east-1:123456789012:connection/your-connection-id" 

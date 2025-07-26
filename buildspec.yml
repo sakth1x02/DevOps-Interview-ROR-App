@@ -6,24 +6,37 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - RAILS_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/rails_app
-      - WEBSERVER_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/webserver
+      - RAILS_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/rails-app
+      - NGINX_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/nginx-proxy
+      - echo Creating ECR repositories if they don't exist...
+      - aws ecr describe-repositories --repository-names rails-app --region $AWS_DEFAULT_REGION || aws ecr create-repository --repository-name rails-app --region $AWS_DEFAULT_REGION
+      - aws ecr describe-repositories --repository-names nginx-proxy --region $AWS_DEFAULT_REGION || aws ecr create-repository --repository-name nginx-proxy --region $AWS_DEFAULT_REGION
   build:
     commands:
       - echo Building Rails app image...
-      - docker build -f docker/app/Dockerfile -t rails_app:$IMAGE_TAG .
-      - docker tag rails_app:$IMAGE_TAG $RAILS_REPO_URI:$IMAGE_TAG
-      - docker tag rails_app:$IMAGE_TAG $RAILS_REPO_URI:latest
-      - echo Building webserver image...
-      - docker build -f docker/nginx/Dockerfile -t webserver:$IMAGE_TAG .
-      - docker tag webserver:$IMAGE_TAG $WEBSERVER_REPO_URI:$IMAGE_TAG
-      - docker tag webserver:$IMAGE_TAG $WEBSERVER_REPO_URI:latest
+      - docker build -f docker/app/Dockerfile -t rails-app:$IMAGE_TAG .
+      - docker tag rails-app:$IMAGE_TAG $RAILS_REPO_URI:$IMAGE_TAG
+      - docker tag rails-app:$IMAGE_TAG $RAILS_REPO_URI:latest
+      - echo Building Nginx proxy image...
+      - docker build -f docker/nginx/Dockerfile -t nginx-proxy:$IMAGE_TAG .
+      - docker tag nginx-proxy:$IMAGE_TAG $NGINX_REPO_URI:$IMAGE_TAG
+      - docker tag nginx-proxy:$IMAGE_TAG $NGINX_REPO_URI:latest
   post_build:
     commands:
       - echo Pushing Rails app image...
       - docker push $RAILS_REPO_URI:$IMAGE_TAG
       - docker push $RAILS_REPO_URI:latest
-      - echo Pushing webserver image...
-      - docker push $WEBSERVER_REPO_URI:$IMAGE_TAG
-      - docker push $WEBSERVER_REPO_URI:latest
-      - echo Build completed on `date` 
+      - echo Pushing Nginx proxy image...
+      - docker push $NGINX_REPO_URI:$IMAGE_TAG
+      - docker push $NGINX_REPO_URI:latest
+      - echo Writing image definitions file...
+      - printf '{"ImageURI":"%s"}' $RAILS_REPO_URI:$IMAGE_TAG > rails-app-image-definitions.json
+      - printf '{"ImageURI":"%s"}' $NGINX_REPO_URI:$IMAGE_TAG > nginx-proxy-image-definitions.json
+      - echo Build completed on `date`
+
+artifacts:
+  files:
+    - rails-app-image-definitions.json
+    - nginx-proxy-image-definitions.json
+    - appspec.yml
+    - taskdef.json 

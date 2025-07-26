@@ -1,0 +1,121 @@
+{
+  "family": "rails-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "<ECS_EXECUTION_ROLE_ARN>",
+  "taskRoleArn": "<ECS_TASK_ROLE_ARN>",
+  "containerDefinitions": [
+    {
+      "name": "rails-app",
+      "image": "<RAILS_APP_IMAGE>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "RAILS_ENV",
+          "value": "production"
+        },
+        {
+          "name": "RAILS_SERVE_STATIC_FILES",
+          "value": "true"
+        },
+        {
+          "name": "RAILS_LOG_TO_STDOUT",
+          "value": "true"
+        },
+        {
+          "name": "RAILS_MAX_THREADS",
+          "value": "5"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "RDS_DB_NAME",
+          "valueFrom": "<RDS_DB_NAME_SECRET_ARN>"
+        },
+        {
+          "name": "RDS_USERNAME",
+          "valueFrom": "<RDS_USERNAME_SECRET_ARN>"
+        },
+        {
+          "name": "RDS_PASSWORD",
+          "valueFrom": "<RDS_PASSWORD_SECRET_ARN>"
+        },
+        {
+          "name": "RDS_HOSTNAME",
+          "valueFrom": "<RDS_HOSTNAME_SECRET_ARN>"
+        },
+        {
+          "name": "RDS_PORT",
+          "valueFrom": "<RDS_PORT_SECRET_ARN>"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "valueFrom": "<S3_BUCKET_NAME_SECRET_ARN>"
+        },
+        {
+          "name": "S3_REGION_NAME",
+          "valueFrom": "<S3_REGION_NAME_SECRET_ARN>"
+        },
+        {
+          "name": "LB_ENDPOINT",
+          "valueFrom": "<LB_ENDPOINT_SECRET_ARN>"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/rails-app",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:3000/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    },
+    {
+      "name": "nginx-proxy",
+      "image": "<NGINX_PROXY_IMAGE>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/nginx-proxy",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:80/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+} 

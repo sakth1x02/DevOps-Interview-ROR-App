@@ -17,28 +17,37 @@ This assignment aims to demonstrate the process of deploying a Dockerized Ruby o
 7. Share a GitHub repository to Github account “Mallowtechdev” and send an email to HR team (hr@mallow-tech.com) about the completion along with Github repository link and branch details.
 
 
-### Iac Structure
+### IaC Structure
 
     ...
-    ├── infrastructure
-    │   ├──  ( # IaC Code files )
-    │   │   ...
-    │   │   ...
-    │   ├──  ReadMe
-    │   ├──  Architecture diagram
-    │   ├──  Other documentation files
-    │   ...              
+    ├── infrastructure/
+    │   ├── main.tf                    # Main Terraform configuration
+    │   ├── variables.tf               # Variable definitions
+    │   ├── outputs.tf                 # Output values
+    │   ├── terraform.tfvars.example   # Example configuration
+    │   ├── deploy.sh                  # Deployment script
+    │   ├── README.md                  # Infrastructure documentation
+    │   ├── ARCHITECTURE.md            # Architecture diagram
+    │   └── modules/                   # Terraform modules
+    │       ├── vpc/                   # VPC and networking
+    │       ├── rds/                   # RDS database
+    │       ├── s3/                    # S3 bucket
+    │       ├── ecs/                   # ECS cluster and services
+    │       ├── alb/                   # Application Load Balancer
+    │       ├── codepipeline/          # CodePipeline CI/CD
+    │       └── secrets/               # Secrets Manager
     ...
 
 
 ### Prerequisites
 
 1. AWS Account with appropriate permissions.
-2. RDS Postgres 13.3 Database ( update the credentials in the below mentioned Environment variables)
-3. LoadBalancer  ( update the loadbalancer endpoint in the environment variable)
-4. Docker installed in your local machine.
-5. Your preferred IaC tool ( Terraform, CDK, CloudFormation)
-6. Other local tools if required.
+2. Terraform >= 1.0 installed on your local machine.
+3. AWS CLI configured with appropriate credentials.
+4. GitHub repository with the Rails application code.
+5. CodeStar connection for GitHub integration.
+6. S3 bucket for Terraform state storage.
+7. Docker installed on your local machine (for local testing).
 
 ### Version details:
 
@@ -67,8 +76,11 @@ This assignment aims to demonstrate the process of deploying a Dockerized Ruby o
     ├── docker-compose.yml         # docker-compose file
     ...
 
-### Environment variable for Ruby container
+### Environment Variables
 
+The application uses AWS Secrets Manager for secure credential storage. The following environment variables are automatically configured:
+
+#### For Rails Container:
 ```env
 RDS_DB_NAME="postgres database name"
 RDS_USERNAME="postgres db user name"
@@ -80,11 +92,56 @@ S3_REGION_NAME="s3 region name"
 LB_ENDPOINT="loadbalancer endpoint without http"
 ```
 
-### Environment variable for Nginx container
-
+#### For Nginx Container:
 ```env
-nil
+# No additional environment variables required
 ```
+
+### Deployment Process
+
+1. **Infrastructure Setup**: Use the provided Terraform configuration to create all AWS resources
+2. **CodePipeline**: Automatically triggered on code pushes to GitHub
+3. **Build Process**: CodeBuild creates Docker images and pushes to ECR
+4. **Deployment**: CodeDeploy updates ECS service with new task definition
+5. **Health Check**: ALB verifies deployment health before traffic switch
+
+### Quick Start
+
+1. **Clone the repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd DevOps-Interview-ROR-App
+   ```
+
+2. **Configure AWS CLI** (if not already done):
+   ```bash
+   aws configure
+   ```
+
+3. **Deploy everything with one command**:
+   ```bash
+   ./deploy.sh
+   ```
+
+4. **Complete GitHub authorization** (if prompted):
+   - Go to AWS CodeStar console
+   - Find the pending connection
+   - Complete GitHub authorization
+   - Run `./deploy.sh` again
+
+5. **Push code to trigger deployment**:
+   ```bash
+   git add .
+   git commit -m "Initial deployment"
+   git push origin main
+   ```
+
+That's it! The script will automatically:
+- Create S3 bucket for Terraform state
+- Create ECR repositories
+- Set up CodeStar connection
+- Deploy all infrastructure
+- Configure secrets and environment variables
 
 ### Note
 This README is a guideline and should be adjusted based on your specific setup and requirements.
